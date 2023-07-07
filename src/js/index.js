@@ -5,9 +5,9 @@ import 'simplelightbox/dist/simple-lightbox.min.css';
 
 const form = document.querySelector('#search-form');
 const gallery = document.querySelector('.gallery');
-const loadMoreButton = document.querySelector('.load-more');
+const loadMoreBtn = document.querySelector('.load-more');
 
-const API_KEY = 38129363 - ebf30580ea635c0303c0013d8;
+const API_KEY = '38129363-ebf30580ea635c0303c0013d8';
 const BASE_URL = 'https://pixabay.com/api/';
 
 let page = 1;
@@ -16,9 +16,18 @@ let currentSearchQuery = '';
 const lightbox = new SimpleLightbox('.photo-card a');
 
 form.addEventListener('submit', handleFormSubmit);
-loadMoreButton.addEventListener('click', loadMoreImages);
+loadMoreBtn.addEventListener('click', loadMoreImages);
 
 hideLoadMoreButton();
+
+async function handleFormSubmit(event) {
+  event.preventDefault();
+  gallery.innerHTML = '';
+  page = 1;
+  const searchQuery = event.target.elements.searchQuery.value.trim();
+  currentSearchQuery = searchQuery;
+  await fetchImages(searchQuery);
+}
 
 async function fetchImages(searchQuery) {
   try {
@@ -54,4 +63,50 @@ async function fetchImages(searchQuery) {
       'Oops! Something went wrong. Please try again later.'
     );
   }
+}
+
+function createGalleryMarkup(images) {
+  return images
+    .map(
+      ({
+        webformatURL,
+        largeImageURL,
+        tags,
+        likes,
+        views,
+        comments,
+        downloads,
+      }) => `
+    <div class="photo-card">
+      <a href="${largeImageURL}">
+        <img src="${webformatURL}" alt="${tags}" loading="lazy" class="photo" />
+      </a>
+      <div class="info">
+        <p class="info-item"><b>Likes:</b> ${likes}</p>
+        <p class="info-item"><b>Views:</b> ${views}</p>
+        <p class="info-item"><b>Comments:</b> ${comments}</p>
+        <p class="info-item"><b>Downloads:</b> ${downloads}</p>
+      </div>
+    </div>
+  `
+    )
+    .join('');
+}
+
+async function loadMoreImages() {
+  await fetchImages(currentSearchQuery);
+  const { height: cardHeight } =
+    gallery.firstElementChild.getBoundingClientRect();
+  window.scrollBy({
+    top: cardHeight * 2,
+    behavior: 'smooth',
+  });
+}
+
+function hideLoadMoreButton() {
+  loadMoreBtn.style.display = 'none';
+}
+
+function showLoadMoreButton() {
+  loadMoreBtn.style.display = 'block';
 }
